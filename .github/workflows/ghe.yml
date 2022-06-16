@@ -53,3 +53,48 @@ jobs:
           echo "GHE_EVENT_ACTION:[ ${{ inputs.GHE_EVENT_ACTION }} ]"
           echo "GHE_ACTOR:[ ${{ inputs.GHE_ACTOR }} ]"
           echo "GHE_REPOSITORY:[ ${{ inputs.GHE_REPOSITORY }} ]"
+          echo "GHE_PROCESS_TIME:[ ${GHE_PROCESS_TIME} ]"
+          echo "GHE_MODULE:[ ${GHE_MODULE} ]"
+          echo "===================================="
+      ################################################################
+      - name: Create JSON Web Token(JWT)
+      ################################################################
+        working-directory: ${{ env.GHE_WORKSPACE }}
+        env:
+          GHEBOT_INSTALLATION_ID: ${{ secrets.GHEBOT_INSTALLATION_ID }}
+          GHEBOT_APP_ID: ${{ secrets.GHEBOT_APP_ID }}
+          GHEBOT_PRIVATE_KEY: ${{ secrets.GHEBOT_PRIVATE_KEY }}
+          GHE_PROCESS_TIME: ${{ env.GHE_PROCESS_TIME }}
+        run: | 
+          # Create JSON Web Token(JWT)
+          # 秘密鍵ファイル名
+          PEM_FILE="ghebot_${GHE_PROCESS_TIME}.pem"
+          # 秘密鍵作成
+          echo "${GHEBOT_PRIVATE_KEY}" > ${PEM_FILE} && chmod 700 ${PEM_FILE}
+          # ヘッダ
+          HEADER=$(echo -n '{"alg":"RS256","typ":"JWT"}' | base64 -w 0)
+          # ペイロード（有効期限:10分）
+          PAYLOAD=$(echo -n "{\"iat\":$((${GHE_PROCESS_TIME} - 60)),\"exp\":$((${GHE_PROCESS_TIME} + 600)),\"iss\":${GHEBOT_APP_ID}}" | base64 -w 0)
+          # JWTヘッダ + ペイロード
+          UNSIGNED_TOKEN="${HEADER}.${PAYLOAD}"
+          # 秘密鍵で署名
+          SIGNED_TOKEN=$(echo -n "${UNSIGNED_TOKEN}" | openssl dgst -binary -sha256 -sign ${PEM_FILE} | base64 -w 0)
+          # 秘密鍵の削除
+          rm -rf ${PEM_FILE}
+          # JWT
+          JWT="${UNSIGNED_TOKEN}.${SIGNED_TOKEN}"
+          # アクセストークン取得
+          API_RESPONSE=$(
+            curl -s -X POST \
+              -H "Authorization: Bearer ${JWT}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "https://hoge.com/api/v3/app/installations/${GHEBOT_INSTALLATION_ID}/access_tokens")
+          # ResponseからToken値を抜き出す
+          GHE_ACCESS_TOKEN=`echo "${API_RESPONSE}" | jq -r '.token'`
+          # 取得判定
+          if [ "${GHE_ACCESS_TOKEN}" = "null" ]; then
+            echo "${API_RESPONSE}"
+            exit 1
+          fi
+          # アクセストークンを環境変数に設定
+          echo "GHE_ACCESS_TOKEN=${GHE_ACCESS_TOKEN}" >> $GITHUB_ENV
