@@ -1,10 +1,33 @@
 name: GHE
 on:
   workflow_call:
+    inputs:
+      GHE_EVENT_NAME:
+        required: true
+        type: string
+      GHE_EVENT_ACTION:
+        required: false
+        type: string
+      GHE_ACTOR:
+        required: true
+        type: string
+    secrets:
+      GHEBOT_INSTALLATION_ID:
+        required: false
+      GHEBOT_APP_ID:
+        required: false
+      GHEBOT_PRIVATE_KEY:
+        required: false
 jobs:
   GHEBOT:
     runs-on: ubuntu-latest
     steps:
-      - name: init
+      ################################################################
+      - name: Initialize
+      ################################################################
         run: |
-          echo "hello world"
+          # ログ出力
+          echo "===================================="
+          echo "github.event_name:[ ${{ inputs.GHE_EVENT_NAME }} ]"
+          echo "github.event.action:[ ${{ inputs.GHE_EVENT_ACTION }} ]"
+          echo "github.actor:[ ${{ inputs.GHE_ACTOR }} ]"
