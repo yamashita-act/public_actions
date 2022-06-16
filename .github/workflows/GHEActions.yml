@@ -1,0 +1,10 @@
+name: GHEActions
+on:
+  workflow_call:
+jobs:
+  GHEBOT:
+    runs-on: ubuntu-latest
+    steps:
+      - name: init
+        run: |
+          echo "hello world"
