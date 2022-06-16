@@ -11,6 +11,9 @@ on:
       GHE_ACTOR:
         required: true
         type: string
+      GHE_REPOSITORY:
+        required: true
+        type: string
     secrets:
       GHEBOT_INSTALLATION_ID:
         required: true
@@ -19,15 +22,34 @@ on:
       GHEBOT_PRIVATE_KEY:
         required: true
 jobs:
+  ####################################################################
   GHEBOT:
-    runs-on: ubuntu-latest
+  ####################################################################
+    env:
+      GHE_WORKSPACE: ${{ github.workspace }}/${{ inputs.GHE_REPOSITORY }}
+      GHE_REPO_SPACE: ${{ github.workspace }}/${{ inputs.GHE_REPOSITORY }}/repo
+    runs-on: ubuntu-latest # self-hosted
     steps:
       ################################################################
       - name: Initialize
       ################################################################
         run: |
+          # Initialize
+          # 処理開始日時(UNIX時間)
+          GHE_PROCESS_TIME=`date +%s`
+          echo "GHE_PROCESS_TIME=${GHE_PROCESS_TIME}" >> $GITHUB_ENV
+          # モジュール判定(main,sub)
+          GHE_MODULE="sub"
+          if [[ ${{ inputs.GHE_REPOSITORY }} == *"_modules" ]]; then 
+            GHE_MODULE="main"
+          fi
+          echo "GHE_MODULE=${GHE_MODULE}" >> $GITHUB_ENV
+          # ディレクトリ作成
+          mkdir -p ${GHE_WORKSPACE}
+          mkdir -p ${GHE_REPO_SPACE}
           # ログ出力
           echo "===================================="
-          echo "github.event_name:[ ${{ inputs.GHE_EVENT_NAME }} ]"
-          echo "github.event.action:[ ${{ inputs.GHE_EVENT_ACTION }} ]"
-          echo "github.actor:[ ${{ inputs.GHE_ACTOR }} ]"
+          echo "GHE_EVENT_NAME:[ ${{ inputs.GHE_EVENT_NAME }} ]"
+          echo "GHE_EVENT_ACTION:[ ${{ inputs.GHE_EVENT_ACTION }} ]"
+          echo "GHE_ACTOR:[ ${{ inputs.GHE_ACTOR }} ]"
+          echo "GHE_REPOSITORY:[ ${{ inputs.GHE_REPOSITORY }} ]"
