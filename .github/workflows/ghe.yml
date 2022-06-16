@@ -6,7 +6,7 @@ on:
         required: true
         type: string
       GHE_EVENT_ACTION:
-        required: false
+        required: true
         type: string
       GHE_ACTOR:
         required: true
