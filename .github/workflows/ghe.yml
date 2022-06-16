@@ -13,11 +13,11 @@ on:
         type: string
     secrets:
       GHEBOT_INSTALLATION_ID:
-        required: false
+        required: true
       GHEBOT_APP_ID:
-        required: false
+        required: true
       GHEBOT_PRIVATE_KEY:
-        required: false
+        required: true
 jobs:
   GHEBOT:
     runs-on: ubuntu-latest
