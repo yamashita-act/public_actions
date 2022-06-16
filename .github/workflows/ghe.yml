@@ -1,4 +1,4 @@
-name: GHEActions
+name: GHE
 on:
   workflow_call:
 jobs:
